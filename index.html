@@ -1,0 +1,615 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#2B4BF2">
+<title>UmbrellaShare</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --blue:#2B4BF2; --blue-dark:#1C34C4; --blue-soft:#E8ECFF;
+    --yellow:#FFD23F; --yellow-soft:#FFF6D6;
+    --ink:#11132A; --muted:#62667F; --line:#E6E8F0;
+    --bg:#F5F6FB; --card:#FFFFFF; --ok:#16A36A; --ok-soft:#E3F7EE; --warn:#E5484D;
+    --radius:18px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{font-family:"Outfit",system-ui,-apple-system,sans-serif;color:var(--ink);background:#DDE2F5;
+    display:flex;align-items:center;justify-content:center;-webkit-font-smoothing:antialiased}
+  button{font:inherit;cursor:pointer;border:0;background:none;color:inherit}
+  input{font:inherit;color:inherit}
+
+  /* phone frame on desktop, full screen on mobile */
+  .phone{width:390px;height:min(844px, calc(100vh - 40px));background:var(--bg);border-radius:44px;overflow:hidden;position:relative;
+    box-shadow:0 30px 80px rgba(20,30,90,.25),0 0 0 10px #11132A;display:flex;flex-direction:column}
+  @media (max-width:500px){
+    body{background:var(--bg);align-items:stretch}
+    .phone{width:100%;height:100dvh;border-radius:0;box-shadow:none}
+  }
+
+  .topbar{display:flex;align-items:center;gap:10px;padding:18px 20px 10px;min-height:64px}
+  .back{width:40px;height:40px;border-radius:12px;background:var(--card);display:grid;place-items:center;border:1px solid var(--line)}
+  .back[hidden]{display:none}
+  .logo{display:flex;align-items:center;gap:8px;font-weight:800;font-size:20px;letter-spacing:-.3px}
+  .logo .mark{width:34px;height:34px;border-radius:10px;background:var(--blue);display:grid;place-items:center}
+  .logo span b{color:var(--blue)}
+  .steps{margin-left:auto;display:flex;gap:5px}
+  .steps[hidden]{display:none}
+  .steps i{width:18px;height:5px;border-radius:3px;background:var(--line)}
+  .steps i.on{background:var(--blue)}
+
+  .screens{flex:1;position:relative;overflow:hidden}
+  .screen{position:absolute;inset:0;overflow-y:auto;padding:6px 20px 28px;display:none;flex-direction:column}
+  .screen > *{flex-shrink:0}
+  .screen.active{display:flex;animation:in .35s ease}
+  @keyframes in{from{opacity:0;transform:translateX(24px)}to{opacity:1;transform:none}}
+
+  h1{font-size:34px;line-height:1.05;letter-spacing:-1px;font-weight:800}
+  h2{font-size:26px;letter-spacing:-.6px;font-weight:700;margin-bottom:6px}
+  .sub{color:var(--muted);font-size:15px;line-height:1.45}
+  .accent{color:var(--blue)}
+
+  .hero{background:var(--blue);color:#fff;border-radius:28px;padding:26px 22px 22px;position:relative;overflow:hidden;margin-top:4px}
+  .hero h1{color:#fff}
+  .hero p{color:#D5DCFF;margin-top:10px;font-size:15px;line-height:1.45;max-width:230px}
+  .hero .rain{position:absolute;right:-14px;top:-6px;width:118px;opacity:.95}
+  .hero h1{position:relative}
+  .price-pill{display:inline-flex;align-items:center;gap:6px;background:var(--yellow);color:var(--ink);font-weight:700;
+    padding:7px 12px;border-radius:999px;font-size:14px;margin-top:16px}
+
+  .btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:16px;border-radius:16px;
+    font-weight:600;font-size:16px;transition:transform .1s, background .2s, opacity .2s}
+  .btn:active{transform:scale(.98)}
+  .btn-primary{background:var(--blue);color:#fff}
+  .btn-primary:hover{background:var(--blue-dark)}
+  .btn-yellow{background:var(--yellow);color:var(--ink)}
+  .btn-ghost{background:var(--card);border:1px solid var(--line)}
+  .btn[hidden]{display:none}
+  .btn:disabled{opacity:.45;pointer-events:none}
+  .spacer{flex:1;min-height:18px}
+  .sticky-cta{position:sticky;bottom:-28px;margin:0 -20px -28px;padding:14px 20px 24px;background:linear-gradient(to bottom,rgba(245,246,251,0),var(--bg) 30%)}
+  .sticky-cta .btn:disabled{opacity:1;background:#B8C3F8}
+
+  .section-title{font-weight:700;font-size:17px;margin:24px 0 12px}
+  .how{display:grid;gap:10px}
+  .how-item{display:flex;gap:14px;align-items:flex-start;background:var(--card);border-radius:var(--radius);padding:14px;border:1px solid var(--line)}
+  .how-num{flex:none;width:34px;height:34px;border-radius:11px;background:var(--blue-soft);color:var(--blue);font-weight:700;display:grid;place-items:center}
+  .how-item b{display:block;font-size:15px}
+  .how-item span{color:var(--muted);font-size:13.5px;line-height:1.4}
+
+  .active-rental{background:var(--yellow-soft);border:1.5px solid var(--yellow);border-radius:var(--radius);padding:16px;margin-top:16px}
+  .active-rental .row{display:flex;justify-content:space-between;align-items:center}
+  .big-count{font-size:40px;font-weight:800;letter-spacing:-1px;font-variant-numeric:tabular-nums;line-height:1;margin-top:12px}
+  .big-count.late{color:var(--warn)}
+  .count-label{font-size:13px;color:var(--muted);margin-top:4px}
+  .bar{height:8px;border-radius:5px;background:rgba(17,19,42,.08);overflow:hidden;margin-top:12px}
+  .bar i{display:block;height:100%;background:var(--blue);border-radius:5px;transition:width .5s}
+  .bar i.late{background:var(--warn)}
+  .late-note{display:none;background:#FDECEC;color:var(--warn);font-size:13.5px;font-weight:600;border-radius:12px;padding:10px 12px;margin-top:12px}
+  .late-note.show{display:block}
+  .ticket-top.ret{background:var(--ink)}
+  .proto{font-size:12px;color:var(--muted);text-align:center;margin-top:8px;line-height:1.4}
+  .tag{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;padding:4px 9px;border-radius:999px;background:var(--yellow);color:var(--ink)}
+
+  /* station cards */
+  .stations{display:grid;gap:10px;margin-top:18px}
+  .station{text-align:left;background:var(--card);border:2px solid var(--line);border-radius:22px;padding:16px;display:flex;gap:14px;align-items:center;transition:border-color .2s, box-shadow .2s}
+  .station:hover{border-color:#C7D0FF}
+  .station.selected{border-color:var(--blue);box-shadow:0 8px 24px rgba(43,75,242,.15)}
+  .station .badge{flex:none;width:56px;height:56px;border-radius:16px;display:grid;place-items:center;font-weight:800;font-size:16px;color:#fff}
+  .station .info{flex:1;min-width:0}
+  .station .name{font-weight:700;font-size:15.5px;line-height:1.25}
+  .station .addr{color:var(--muted);font-size:13.5px;margin-top:2px}
+  .avail{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;margin-top:8px;color:var(--ok)}
+  .avail::before{content:"";width:8px;height:8px;border-radius:50%;background:currentColor}
+  .avail.low{color:#C27C00}
+  .area{font-size:12.5px;color:var(--muted);margin-left:10px;font-weight:500}
+  .radio{flex:none;width:24px;height:24px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center}
+  .station.selected .radio{border-color:var(--blue);background:var(--blue)}
+  .station.selected .radio::after{content:"";width:8px;height:8px;border-radius:50%;background:#fff}
+
+  /* forms */
+  .field{margin-top:16px}
+  .field label{display:block;font-weight:600;font-size:14px;margin-bottom:7px}
+  .field input{width:100%;padding:15px 16px;border-radius:14px;border:1.5px solid var(--line);background:var(--card);font-size:16px;outline:none;transition:border-color .2s, box-shadow .2s}
+  .field input:focus{border-color:var(--blue);box-shadow:0 0 0 4px var(--blue-soft)}
+  .field input.invalid{border-color:var(--warn)}
+  .err{color:var(--warn);font-size:13px;margin-top:6px;display:none}
+  .err.show{display:block}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+  .terms{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:16px;margin-top:22px}
+  .terms h3{font-size:15px;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+  .terms ul{list-style:none;display:grid;gap:8px;margin-bottom:14px}
+  .terms li{display:flex;gap:10px;font-size:14px;color:var(--muted);line-height:1.4}
+  .terms li b{color:var(--ink)}
+  .terms li::before{content:"";flex:none;width:6px;height:6px;border-radius:50%;background:var(--blue);margin-top:7px}
+  .check{display:flex;gap:12px;align-items:flex-start;cursor:pointer;font-size:14px;line-height:1.4;padding-top:14px;border-top:1px solid var(--line)}
+  .check input{appearance:none;flex:none;width:22px;height:22px;border-radius:7px;border:2px solid #C9CDE0;display:grid;place-items:center;margin-top:1px;cursor:pointer}
+  .check input:checked{background:var(--blue);border-color:var(--blue)}
+  .check input:checked::after{content:"";width:6px;height:11px;border:solid #fff;border-width:0 2.5px 2.5px 0;transform:rotate(45deg) translate(-1px,-1px)}
+
+  /* payment */
+  .summary{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:16px;margin-top:16px}
+  .summary .line{display:flex;justify-content:space-between;font-size:14.5px;padding:6px 0;color:var(--muted)}
+  .summary .line b{color:var(--ink);font-weight:600}
+  .summary .total{border-top:1px dashed var(--line);margin-top:6px;padding-top:12px;font-size:17px;color:var(--ink);font-weight:700}
+  .methods{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+  .method{background:var(--card);border:2px solid var(--line);border-radius:16px;padding:14px 12px;display:flex;align-items:center;gap:10px;font-weight:600;font-size:14.5px;text-align:left}
+  .method.selected{border-color:var(--blue);background:#F7F8FF}
+  .method .ico{width:34px;height:24px;border-radius:6px;display:grid;place-items:center;font-size:10px;font-weight:800;color:#fff;flex:none}
+  .pay-panel{margin-top:4px}
+  .pay-panel[hidden]{display:none}
+  .note{display:flex;gap:10px;align-items:flex-start;font-size:13px;color:var(--muted);background:var(--blue-soft);border-radius:14px;padding:12px 14px;margin-top:16px;line-height:1.45}
+  .note svg{flex:none;margin-top:1px}
+  .demo{font-size:12px;color:var(--muted);text-align:center;margin-top:10px}
+
+  .loading{position:absolute;inset:0;background:rgba(245,246,251,.92);display:none;flex-direction:column;align-items:center;justify-content:center;gap:16px;z-index:10;font-weight:600}
+  .loading.show{display:flex}
+  .spinner{width:46px;height:46px;border-radius:50%;border:4px solid var(--blue-soft);border-top-color:var(--blue);animation:spin .8s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  /* success */
+  .success-head{text-align:center;padding-top:6px}
+  .tick{width:72px;height:72px;border-radius:50%;background:var(--ok-soft);display:grid;place-items:center;margin:0 auto 14px;animation:pop .5s ease}
+  @keyframes pop{0%{transform:scale(.4);opacity:0}70%{transform:scale(1.1)}100%{transform:scale(1);opacity:1}}
+  .ticket{background:var(--card);border-radius:24px;margin-top:20px;border:1px solid var(--line);overflow:hidden}
+  .ticket-top{background:var(--blue);color:#fff;padding:18px;display:flex;justify-content:space-between;align-items:center}
+  .ticket-top small{color:#C9D2FF;font-size:12px;text-transform:uppercase;letter-spacing:.8px;font-weight:600}
+  .ticket-top .big{font-size:30px;font-weight:800;letter-spacing:3px}
+  .slot{background:var(--yellow);color:var(--ink);border-radius:14px;padding:8px 14px;text-align:center}
+  .slot small{color:var(--ink);opacity:.7}
+  .slot .big{font-size:17px;letter-spacing:.5px;margin-top:2px}
+  .ticket-body{padding:16px 18px;display:grid;gap:14px}
+  .tinfo{display:flex;gap:12px;align-items:flex-start}
+  .tinfo .ic{flex:none;width:36px;height:36px;border-radius:11px;background:var(--blue-soft);display:grid;place-items:center}
+  .tinfo > div > b{display:block;font-size:14.5px}
+  .tinfo span{color:var(--muted);font-size:13.5px;line-height:1.4}
+  .countdown{font-variant-numeric:tabular-nums;font-weight:700;color:var(--ink)}
+  .unlocked{display:none;background:var(--ok-soft);color:var(--ok);font-weight:600;border-radius:14px;padding:14px;text-align:center;margin-top:14px}
+  .unlocked.show{display:block;animation:pop .4s ease}
+
+  .toast{position:absolute;left:50%;bottom:26px;transform:translate(-50%,30px);background:var(--ink);color:#fff;padding:12px 18px;border-radius:14px;font-size:14px;opacity:0;transition:.3s;pointer-events:none;z-index:20;white-space:nowrap}
+  .toast.show{opacity:1;transform:translate(-50%,0)}
+</style>
+</head>
+<body>
+<div class="phone">
+  <header class="topbar">
+    <button class="back" id="backBtn" hidden aria-label="Back">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+    </button>
+    <div class="logo" id="logo">
+      <div class="mark">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFD23F" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 0 1 10 10H2A10 10 0 0 1 12 2z" fill="#FFD23F"/><path d="M12 12v7a2 2 0 0 0 4 0" stroke="#fff"/></svg>
+      </div>
+      <span>Umbrella<b>Share</b></span>
+    </div>
+    <div class="steps" id="steps" hidden><i></i><i></i><i></i><i></i></div>
+  </header>
+
+  <main class="screens">
+    <!-- HOME -->
+    <section class="screen active" id="s-home">
+      <div class="hero">
+        <svg class="rain" viewBox="0 0 160 160" fill="none">
+          <path d="M80 30a52 52 0 0 1 52 52H28a52 52 0 0 1 52-52z" fill="#FFD23F"/>
+          <path d="M80 30c-14 14-20 32-20 52M80 30c14 14 20 32 20 52" stroke="#E6B800" stroke-width="3"/>
+          <path d="M80 82v40a10 10 0 0 1-20 0" stroke="#fff" stroke-width="6" stroke-linecap="round"/>
+          <g stroke="#9DB0FF" stroke-width="4" stroke-linecap="round"><path d="M30 10l-6 12"/><path d="M60 0l-6 12"/><path d="M118 6l-6 12"/><path d="M145 22l-6 12"/><path d="M20 110l-6 12"/><path d="M140 108l-6 12"/></g>
+        </svg>
+        <h1>Caught in<br>the rain?<br><span style="color:var(--yellow)">We've got you.</span></h1>
+        <p>Pick up an umbrella at the service desk and return it within 24 hours.</p>
+        <div class="price-pill">Only €2 per rental</div>
+      </div>
+
+      <div id="activeRental"></div>
+
+      <div class="section-title">How it works</div>
+      <div class="how">
+        <div class="how-item"><div class="how-num">1</div><div><b>Choose a location</b><span>The Inner City Library or any faculty building.</span></div></div>
+        <div class="how-item"><div class="how-num">2</div><div><b>Enter your student details</b><span>Your name and student ID. That's all we need.</span></div></div>
+        <div class="how-item"><div class="how-num">3</div><div><b>Pay €2 and get a pickup code</b><span>Show it at the service desk and they hand you an umbrella for 24 h.</span></div></div>
+        <div class="how-item"><div class="how-num">4</div><div><b>Return it to a service desk</b><span>At any location. Late by more than 24 h? A €10 fee is charged automatically.</span></div></div>
+      </div>
+      <div class="spacer"></div>
+      <button class="btn btn-primary" id="startBtn" style="margin-top:20px">Rent an umbrella</button>
+    </section>
+
+    <!-- STATION -->
+    <section class="screen" id="s-station">
+      <h2>Choose a location</h2>
+      <p class="sub">Where do you want to pick up your umbrella?</p>
+      <div class="stations" id="stationList"></div>
+      <div class="spacer"></div>
+      <div class="sticky-cta"><button class="btn btn-primary" id="stationNext" disabled>Continue</button></div>
+    </section>
+
+    <!-- DETAILS -->
+    <section class="screen" id="s-details">
+      <h2>Your details</h2>
+      <p class="sub">We use these to link the umbrella to you.</p>
+      <div class="field">
+        <label for="fullName">Full name</label>
+        <input id="fullName" autocomplete="name" placeholder="e.g. Chiara Rossi">
+        <div class="err" id="nameErr">Please enter your full name.</div>
+      </div>
+      <div class="field">
+        <label for="studentId">Student ID</label>
+        <input id="studentId" placeholder="e.g. i6312345" autocapitalize="off" autocomplete="off">
+        <div class="err" id="idErr">Enter a valid student ID (6–10 letters/digits).</div>
+      </div>
+
+      <div class="terms">
+        <h3>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2B4BF2" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+          Rental terms
+        </h3>
+        <ul>
+          <li><span>The rental costs <b>€2.00</b>, paid now.</span></li>
+          <li><span>Return the umbrella to the service desk at any UmbrellaShare location <b>within 24 hours</b>.</span></li>
+          <li><span>If it's late, a <b>€10.00 fee</b> is charged automatically to the payment method you use now.</span></li>
+        </ul>
+        <label class="check">
+          <input type="checkbox" id="agree">
+          <span>I agree to return the umbrella within 24 hours and accept the automatic €10 late fee.</span>
+        </label>
+      </div>
+      <div class="spacer"></div>
+      <button class="btn btn-primary" id="detailsNext" disabled style="margin-top:20px">Continue to payment</button>
+    </section>
+
+    <!-- PAYMENT -->
+    <section class="screen" id="s-payment">
+      <h2>Payment</h2>
+      <p class="sub">Choose how you want to pay.</p>
+
+      <div class="summary">
+        <div class="line"><span>Pickup at</span><b id="sumStation">–</b></div>
+        <div class="line"><span>Renter</span><b id="sumName">–</b></div>
+        <div class="line"><span>Umbrella rental (24 h)</span><b>€2.00</b></div>
+        <div class="line total"><span>Total today</span><span>€2.00</span></div>
+      </div>
+
+      <div class="section-title" style="margin-top:20px">Payment method</div>
+      <div class="methods" id="methods">
+        <button class="method selected" data-m="ideal"><span class="ico" style="background:#CC0066">iD</span>iDEAL</button>
+        <button class="method" data-m="card"><span class="ico" style="background:#1A1F71">CARD</span>Card</button>
+        <button class="method" data-m="paypal"><span class="ico" style="background:#003087">PP</span>PayPal</button>
+        <button class="method" data-m="apple"><span class="ico" style="background:#000"></span>Apple Pay</button>
+      </div>
+
+      <div class="pay-panel" id="panel-card" hidden>
+        <div class="field">
+          <label for="cardNum">Card number</label>
+          <input id="cardNum" inputmode="numeric" placeholder="4242 4242 4242 4242" maxlength="19">
+        </div>
+        <div class="row2">
+          <div class="field"><label for="cardExp">Expiry</label><input id="cardExp" inputmode="numeric" placeholder="MM/YY" maxlength="5"></div>
+          <div class="field"><label for="cardCvc">CVC</label><input id="cardCvc" inputmode="numeric" placeholder="123" maxlength="4"></div>
+        </div>
+        <div class="err" id="cardErr">Please fill in all card details.</div>
+      </div>
+
+      <div class="note">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2B4BF2" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        <span>This payment method is saved for this rental. If you return the umbrella late, the €10 fee is charged to it automatically.</span>
+      </div>
+      <div class="spacer"></div>
+      <button class="btn btn-primary" id="payBtn" style="margin-top:20px">Pay €2.00</button>
+      <div class="demo">Prototype: no real payment is made.</div>
+    </section>
+
+    <!-- SUCCESS -->
+    <section class="screen" id="s-success">
+      <div class="success-head">
+        <div class="tick"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#16A36A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></div>
+        <h2>Payment successful</h2>
+        <p class="sub">Your umbrella is waiting for you at the service desk.</p>
+      </div>
+
+      <div class="ticket">
+        <div class="ticket-top">
+          <div><small>Pickup code</small><div class="big" id="tCode">----</div></div>
+          <div class="slot"><small>Student ID</small><div class="big" id="tSlot">–</div></div>
+        </div>
+        <div class="ticket-body">
+          <div class="tinfo">
+            <div class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2B4BF2" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></div>
+            <div><b id="tStation">–</b><span id="tWhere">–</span></div>
+          </div>
+          <div class="tinfo">
+            <div class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2B4BF2" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M8 10h8M8 14h5"/></svg></div>
+            <div><b>How to collect</b><span>Go to the service desk and show this screen. Staff check your pickup code and student ID, then hand you an umbrella.</span></div>
+          </div>
+          <div class="tinfo">
+            <div class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2B4BF2" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div>
+            <div><b>Return by <span id="tDue">–</span></b><span>Time left: <span class="countdown" id="tCountdown">24:00:00</span>. After that, €10 is charged automatically.</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="unlocked" id="unlockedMsg">Umbrella collected. Stay dry, and remember to return it in time!</div>
+      <div class="spacer"></div>
+      <button class="btn btn-yellow" id="unlockBtn" style="margin-top:20px">I've got my umbrella</button>
+      <button class="btn btn-ghost" id="homeBtn" style="margin-top:10px">Back to home</button>
+    </section>
+    <!-- RETURN -->
+    <section class="screen" id="s-return">
+      <div id="retPending">
+        <h2>Return your umbrella</h2>
+        <p class="sub">Bring it to the service desk at any UmbrellaShare location and show this code.</p>
+        <div class="ticket">
+          <div class="ticket-top ret">
+            <div><small>Return code</small><div class="big" id="rCode">----</div></div>
+            <div class="slot"><small>Student ID</small><div class="big" id="rId">–</div></div>
+          </div>
+          <div class="ticket-body">
+            <div class="tinfo">
+              <div class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2B4BF2" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M8 10h8M8 14h5"/></svg></div>
+              <div><b>At the service desk</b><span>Hand over the umbrella and show this screen. Staff enter your return code to log the return, and your rental ends.</span></div>
+            </div>
+            <div class="tinfo">
+              <div class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2B4BF2" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></div>
+              <div><b>Any location works</b><span>Library, SBE, Law, FASoS, FPN, FHML or FSE.</span></div>
+            </div>
+            <div class="tinfo">
+              <div class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2B4BF2" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div>
+              <div><b>Time left: <span class="countdown" id="rCountdown">–</span></b><span>Picked up at <span id="rFrom">–</span>.</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="late-note" id="rLate">Your 24 hours are up. A €10 late fee will be charged when the return is logged.</div>
+      </div>
+
+      <div id="retDone" hidden>
+        <div class="success-head">
+          <div class="tick"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#16A36A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></div>
+          <h2>Umbrella returned</h2>
+          <p class="sub" id="retDoneText">Thanks for returning it on time. No extra charges.</p>
+        </div>
+        <div class="summary">
+          <div class="line"><span>Rental</span><b>€2.00</b></div>
+          <div class="line"><span>Late fee</span><b id="retFee">€0.00</b></div>
+          <div class="line total"><span>Total</span><span id="retTotal">€2.00</span></div>
+        </div>
+      </div>
+
+      <div class="spacer"></div>
+      <button class="btn btn-primary" id="staffConfirm" style="margin-top:20px">Simulate: desk logs the return</button>
+      <div class="proto" id="protoNote">Prototype: in the real app this happens automatically when staff enter your code.</div>
+      <button class="btn btn-ghost" id="retHome" style="margin-top:10px">Back to home</button>
+    </section>
+  </main>
+
+  <div class="loading" id="loading"><div class="spinner"></div><span id="loadingText">Processing payment…</span></div>
+  <div class="toast" id="toast"></div>
+</div>
+
+<script>
+const STATIONS = [
+  { id:"icl",   short:"ICL",   name:"Inner City Library", addr:"Grote Looiersstraat 17, 6211 JH", area:"City centre", where:"Service desk on the ground floor", color:"#2B4BF2", available:12 },
+  { id:"sbe",   short:"SBE",   name:"School of Business and Economics", addr:"Tongersestraat 53, 6211 LM", area:"City centre", where:"Service desk in the main hall", color:"#7C3AED", available:4 },
+  { id:"law",   short:"LAW",   name:"Faculty of Law", addr:"Bouillonstraat 1-3, 6211 LH", area:"City centre", where:"Service desk at the main entrance", color:"#B42318", available:7 },
+  { id:"fasos", short:"FASoS", name:"Faculty of Arts and Social Sciences", addr:"Grote Gracht 90-92, 6211 SZ", area:"City centre", where:"Service desk at the main entrance", color:"#C2410C", available:6 },
+  { id:"fpn",   short:"FPN",   name:"Faculty of Psychology and Neuroscience", addr:"Universiteitssingel 40, 6229 ER", area:"Randwyck", where:"Service desk in the entrance hall", color:"#0E7490", available:9 },
+  { id:"fhml",  short:"FHML",  name:"Faculty of Health, Medicine and Life Sciences", addr:"Universiteitssingel 40, 6229 ER", area:"Randwyck", where:"Service desk in the entrance hall", color:"#15803D", available:3 },
+  { id:"fse",   short:"FSE",   name:"Faculty of Science and Engineering", addr:"Paul-Henri Spaaklaan 1, 6229 EN", area:"Randwyck", where:"Service desk at the main entrance", color:"#4338CA", available:8 },
+];
+const order = ["s-home","s-station","s-details","s-payment","s-success"];
+const state = { station:null, name:"", studentId:"", method:"ideal" };
+let current = "s-home", timer = null;
+
+const $ = id => document.getElementById(id);
+let memRental = null; // fallback when browser storage is unavailable
+const store = {
+  get(){ try { const v = localStorage.getItem("umbrellashare-rental"); return v ? JSON.parse(v) : memRental; } catch { return memRental; } },
+  set(v){ memRental = v; try { localStorage.setItem("umbrellashare-rental", JSON.stringify(v)); } catch {} },
+  clear(){ memRental = null; try { localStorage.removeItem("umbrellashare-rental"); } catch {} },
+};
+
+function go(id){
+  document.querySelectorAll(".screen").forEach(s => s.classList.toggle("active", s.id === id));
+  current = id;
+  const idx = order.indexOf(id);
+  $("backBtn").hidden = !(idx > 0 && idx < 4) && id !== "s-return";
+  $("logo").style.display = (idx > 0 && idx < 4) ? "none" : "flex";
+  $("steps").hidden = !(idx > 0 && idx < 4);
+  document.querySelectorAll("#steps i").forEach((el,i) => el.classList.toggle("on", i < idx));
+  if (id === "s-home") renderActive();
+}
+
+function toast(msg){
+  const t = $("toast"); t.textContent = msg; t.classList.add("show");
+  clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove("show"), 2200);
+}
+
+/* home */
+function renderActive(){
+  const r = store.get(), box = $("activeRental");
+  $("startBtn").hidden = !!r;
+  if (!r) { box.innerHTML = ""; return; }
+  const st = STATIONS.find(s => s.id === r.station);
+  const dueTxt = new Date(r.due).toLocaleString("en-GB",{weekday:"short",hour:"2-digit",minute:"2-digit"});
+  box.innerHTML = `<div class="active-rental">
+      <div class="row"><b>Your umbrella</b><span class="tag">${st.short}</span></div>
+      <div class="big-count countdown" data-due="${r.due}" id="homeCount">--:--:--</div>
+      <div class="count-label" id="homeLabel" data-due-txt="${dueTxt}">left to return it · due ${dueTxt}</div>
+      <div class="bar"><i id="homeBar" style="width:100%"></i></div>
+      <div class="late-note" id="homeLate">Overdue: a €10 late fee will be charged. Return it as soon as you can.</div>
+      <button class="btn btn-primary" id="returnBtn" style="margin-top:14px">Return umbrella</button>
+      <button class="btn btn-ghost" id="viewTicket" style="margin-top:8px;padding:12px">View pickup ticket</button>
+    </div>`;
+  $("viewTicket").onclick = () => { fillTicket(r); go("s-success"); };
+  $("returnBtn").onclick = openReturn;
+  tick();
+}
+
+/* return */
+function openReturn(){
+  const r = store.get(); if (!r) return go("s-home");
+  if (!r.returnCode){ r.returnCode = "R-" + Math.floor(1000 + Math.random()*9000); store.set(r); }
+  window._ret = r;
+  const st = STATIONS.find(s => s.id === r.station);
+  $("rCode").textContent = r.returnCode;
+  $("rId").textContent = r.studentId;
+  $("rFrom").textContent = st.name;
+  $("rCountdown").dataset.due = r.due;
+  $("retPending").hidden = false; $("retDone").hidden = true;
+  $("staffConfirm").hidden = false; $("protoNote").hidden = false;
+  tick();
+  go("s-return");
+}
+$("staffConfirm").onclick = () => {
+  const r = store.get() || window._ret; if (!r) return go("s-home");
+  $("loadingText").textContent = "Logging return…";
+  $("loading").classList.add("show");
+  setTimeout(() => {
+    $("loading").classList.remove("show");
+    const late = Date.now() > r.due;
+    $("retFee").textContent = late ? "€10.00" : "€0.00";
+    $("retTotal").textContent = late ? "€12.00" : "€2.00";
+    $("retDoneText").textContent = late
+      ? "It was returned after 24 hours, so the €10 late fee was charged to your payment method."
+      : "Thanks for returning it on time. No extra charges.";
+    const st = STATIONS.find(s => s.id === r.station); if (st) st.available++;
+    store.clear(); window._ret = null;
+    $("retPending").hidden = true; $("retDone").hidden = false;
+    $("staffConfirm").hidden = true; $("protoNote").hidden = true;
+  }, 1200);
+};
+$("retHome").onclick = () => go("s-home");
+
+/* stations */
+function renderStations(){
+  $("stationList").innerHTML = STATIONS.map(s => `
+    <button class="station ${state.station===s.id?"selected":""}" data-id="${s.id}">
+      <div class="badge" style="background:${s.color};font-size:${s.short.length>3?13:16}px">${s.short}</div>
+      <div class="info">
+        <div class="name">${s.name}</div>
+        <div class="addr">${s.addr}</div>
+        <div class="avail ${s.available<5?"low":""}">${s.available} available</div><span class="area">${s.area}</span>
+      </div>
+      <div class="radio"></div>
+    </button>`).join("");
+  document.querySelectorAll(".station").forEach(b => b.onclick = () => {
+    state.station = b.dataset.id; renderStations(); $("stationNext").disabled = false;
+  });
+}
+
+/* details */
+const idOk = v => /^[A-Za-z0-9]{6,10}$/.test(v.trim());
+const nameOk = v => v.trim().split(/\s+/).length >= 2 && v.trim().length >= 4;
+function checkDetails(){
+  $("detailsNext").disabled = !(nameOk($("fullName").value) && idOk($("studentId").value) && $("agree").checked);
+}
+["fullName","studentId"].forEach(id => {
+  $(id).addEventListener("input", () => { $(id).classList.remove("invalid"); $(id==="fullName"?"nameErr":"idErr").classList.remove("show"); checkDetails(); });
+  $(id).addEventListener("blur", () => {
+    const ok = id==="fullName" ? nameOk($(id).value) : idOk($(id).value);
+    if ($(id).value && !ok){ $(id).classList.add("invalid"); $(id==="fullName"?"nameErr":"idErr").classList.add("show"); }
+  });
+});
+$("agree").addEventListener("change", checkDetails);
+
+/* payment */
+document.querySelectorAll(".method").forEach(b => b.onclick = () => {
+  state.method = b.dataset.m;
+  document.querySelectorAll(".method").forEach(x => x.classList.toggle("selected", x === b));
+  $("panel-card").hidden = state.method !== "card";
+});
+$("cardNum").addEventListener("input", e => { e.target.value = e.target.value.replace(/\D/g,"").slice(0,16).replace(/(.{4})/g,"$1 ").trim(); });
+$("cardExp").addEventListener("input", e => { let v = e.target.value.replace(/\D/g,"").slice(0,4); if (v.length>2) v = v.slice(0,2)+"/"+v.slice(2); e.target.value = v; });
+$("cardCvc").addEventListener("input", e => { e.target.value = e.target.value.replace(/\D/g,""); });
+
+$("payBtn").onclick = () => {
+  if (state.method === "card"){
+    const ok = $("cardNum").value.replace(/\s/g,"").length >= 15 && /^\d{2}\/\d{2}$/.test($("cardExp").value) && $("cardCvc").value.length >= 3;
+    $("cardErr").classList.toggle("show", !ok);
+    if (!ok) return;
+  }
+  const labels = { ideal:"Redirecting to your bank…", card:"Processing payment…", paypal:"Connecting to PayPal…", apple:"Confirming with Apple Pay…" };
+  $("loadingText").textContent = labels[state.method];
+  $("loading").classList.add("show");
+  setTimeout(() => {
+    $("loading").classList.remove("show");
+    const st = STATIONS.find(s => s.id === state.station);
+    const rental = {
+      station: st.id, name: state.name, studentId: state.studentId, method: state.method,
+      code: String(Math.floor(1000 + Math.random()*9000)),
+      due: Date.now() + 24*60*60*1000, unlocked:false,
+    };
+    st.available = Math.max(0, st.available - 1);
+    store.set(rental);
+    fillTicket(rental);
+    go("s-success");
+  }, 1800);
+};
+
+/* success */
+function fillTicket(r){
+  const st = STATIONS.find(s => s.id === r.station);
+  $("tCode").textContent = r.code;
+  $("tSlot").textContent = r.studentId;
+  $("tStation").textContent = `${st.name} · ${st.addr}`;
+  $("tWhere").textContent = st.where;
+  $("tDue").textContent = new Date(r.due).toLocaleString("en-GB",{weekday:"short",hour:"2-digit",minute:"2-digit"});
+  $("tCountdown").dataset.due = r.due;
+  $("unlockedMsg").classList.toggle("show", !!r.unlocked);
+  $("unlockBtn").hidden = !!r.unlocked;
+  tick();
+}
+$("unlockBtn").onclick = () => {
+  $("loadingText").textContent = "Confirming pickup…";
+  $("loading").classList.add("show");
+  setTimeout(() => {
+    $("loading").classList.remove("show");
+    const r = store.get(); if (r){ r.unlocked = true; store.set(r); }
+    $("unlockedMsg").classList.add("show"); $("unlockBtn").hidden = true;
+  }, 1200);
+};
+
+/* countdown */
+function fmt(ms){
+  if (ms <= 0) return "overdue";
+
+  const s = Math.floor(ms/1000), h = Math.floor(s/3600), m = Math.floor(s%3600/60), sec = s%60;
+  return [h,m,sec].map(n => String(n).padStart(2,"0")).join(":");
+}
+function tick(){
+  document.querySelectorAll(".countdown[data-due]").forEach(el => el.textContent = fmt(+el.dataset.due - Date.now()));
+  const r = store.get() || window._ret; if (!r) return;
+  const left = r.due - Date.now(), late = left <= 0;
+  const bar = $("homeBar"), hc = $("homeCount");
+  if (bar){ bar.style.width = Math.max(0, Math.min(100, left / (24*3600*1000) * 100)) + "%"; bar.classList.toggle("late", late); }
+  if (hc) hc.classList.toggle("late", late);
+  const hl = $("homeLabel");
+  if (hl) hl.textContent = late ? `overdue · was due ${hl.dataset.dueTxt}` : `left to return it · due ${hl.dataset.dueTxt}`;
+  if (hc && late) hc.textContent = "+" + fmt(0 - left + 1000).replace("overdue","00:00:00");
+  $("homeLate") && $("homeLate").classList.toggle("show", late);
+  $("rLate").classList.toggle("show", late);
+}
+setInterval(tick, 1000);
+
+/* navigation */
+$("startBtn").onclick = () => {
+  if (store.get()){ toast("Return your current umbrella first."); return; }
+  renderStations(); go("s-station");
+};
+$("stationNext").onclick = () => go("s-details");
+$("detailsNext").onclick = () => {
+  state.name = $("fullName").value.trim(); state.studentId = $("studentId").value.trim().toUpperCase();
+  $("sumStation").textContent = STATIONS.find(s => s.id === state.station).name;
+  $("sumName").textContent = `${state.name} (${state.studentId})`;
+  go("s-payment");
+};
+$("backBtn").onclick = () => { if (current === "s-return") return go("s-home"); const i = order.indexOf(current); if (i > 0) go(order[i-1]); };
+$("homeBtn").onclick = () => go("s-home");
+
+renderActive();
+</script>
+</body>
+</html>
